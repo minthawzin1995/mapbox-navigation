@@ -13,11 +13,14 @@ import com.mapbox.android.core.location.LocationEngineProvider;
 import com.mapbox.android.core.permissions.PermissionsListener;
 import com.mapbox.android.core.permissions.PermissionsManager;
 import com.mapbox.mapboxsdk.Mapbox;
+import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 import com.mapbox.mapboxsdk.plugins.locationlayer.LocationLayerPlugin;
 import com.mapbox.mapboxsdk.plugins.locationlayer.modes.CameraMode;
+import com.mapbox.mapboxsdk.annotations.Marker;
+import com.mapbox.mapboxsdk.annotations.MarkerOptions;
 
 import java.util.List;
 
@@ -25,7 +28,7 @@ import java.util.List;
  * Use the Location Layer plugin to easily add a device location "puck" to a Mapbox map.
  */
 public class MainActivity extends AppCompatActivity implements
-        OnMapReadyCallback, PermissionsListener, LocationEngineListener {
+        OnMapReadyCallback, PermissionsListener, LocationEngineListener, MapboxMap.OnMapClickListener {
 
     private PermissionsManager permissionsManager;
     private MapboxMap mapboxMap;
@@ -34,6 +37,11 @@ public class MainActivity extends AppCompatActivity implements
     // variables for adding location layer
     private LocationLayerPlugin locationLayerPlugin;
     private Location originLocation;
+    // variables for adding a marker
+    private Marker destinationMarker;
+    private LatLng originCoord;
+    private LatLng destinationCoord;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,6 +63,9 @@ public class MainActivity extends AppCompatActivity implements
     public void onMapReady(MapboxMap mapboxMap) {
         MainActivity.this.mapboxMap = mapboxMap;
         enableLocationPlugin();
+        originCoord = new LatLng(originLocation.getLatitude(), originLocation.getLongitude());
+        mapboxMap.addOnMapClickListener(this);
+
     }
 
     @SuppressWarnings( {"MissingPermission"})
@@ -166,6 +177,24 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public void onLocationChanged(Location location) {
+
+    }
+
+    @Override
+    public void onMapClick(@NonNull LatLng point){
+        if (destinationMarker != null) {
+            mapboxMap.removeMarker(destinationMarker);
+        }
+        destinationCoord = point;
+        destinationMarker = mapboxMap.addMarker(new MarkerOptions()
+                .position(destinationCoord)
+        );
+
+
+    }
+
+    @Override
+    public void onPointerCaptureChanged(boolean hasCapture) {
 
     }
 }
