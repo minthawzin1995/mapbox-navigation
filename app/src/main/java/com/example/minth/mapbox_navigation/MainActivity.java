@@ -12,6 +12,7 @@ import com.mapbox.android.core.location.LocationEnginePriority;
 import com.mapbox.android.core.location.LocationEngineProvider;
 import com.mapbox.android.core.permissions.PermissionsListener;
 import com.mapbox.android.core.permissions.PermissionsManager;
+import com.mapbox.geojson.Point;
 import com.mapbox.mapboxsdk.Mapbox;
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.maps.MapView;
@@ -21,6 +22,14 @@ import com.mapbox.mapboxsdk.plugins.locationlayer.LocationLayerPlugin;
 import com.mapbox.mapboxsdk.plugins.locationlayer.modes.CameraMode;
 import com.mapbox.mapboxsdk.annotations.Marker;
 import com.mapbox.mapboxsdk.annotations.MarkerOptions;
+import com.mapbox.services.android.navigation.ui.v5.route.NavigationMapRoute;
+import com.mapbox.services.android.navigation.v5.navigation.NavigationRoute;
+import com.mapbox.api.directions.v5.models.DirectionsResponse;
+import com.mapbox.api.directions.v5.models.DirectionsRoute;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import android.util.Log;
 
 import java.util.List;
 
@@ -41,6 +50,11 @@ public class MainActivity extends AppCompatActivity implements
     private Marker destinationMarker;
     private LatLng originCoord;
     private LatLng destinationCoord;
+    private Point originPosition;
+    private Point destinationPosition;
+    private DirectionsRoute currentRoute;
+    private static final String TAG = "DirectionsActivity";
+    private NavigationMapRoute navigationMapRoute;
 
 
     @Override
@@ -189,12 +203,52 @@ public class MainActivity extends AppCompatActivity implements
         destinationMarker = mapboxMap.addMarker(new MarkerOptions()
                 .position(destinationCoord)
         );
-
+        
+        destinationPosition = Point.fromLngLat(destinationCoord.getLongitude(), destinationCoord.getLatitude());
+        originPosition = Point.fromLngLat(originCoord.getLongitude(), originCoord.getLatitude());
+        getRoute(originPosition, destinationPosition);
 
     }
 
     @Override
     public void onPointerCaptureChanged(boolean hasCapture) {
 
+    }
+
+    private void getRoute(Point origin, Point destination) {
+        NavigationRoute.builder(this)
+                .accessToken(Mapbox.getAccessToken())
+                .origin(origin)
+                .destination(destination)
+                .build()
+                .getRoute(new Callback<DirectionsResponse>() {
+                    @Override
+                    public void onResponse(Call<DirectionsResponse> call, Response<DirectionsResponse> response) {
+                        // You can get the generic HTTP info about the response
+                        Log.d(TAG, "Response code: " + response.code());
+                        if (response.body() == null) {
+                            Log.e(TAG, "No routes found, make sure you set the right user and access token.");
+                            return;
+                        } else if (response.body().routes().size() < 1) {
+                            Log.e(TAG, "No routes found");
+                            return;
+                        }
+
+                        currentRoute = response.body().routes().get(0);
+
+                        // Draw the route on the map
+                        if (navigationMapRoute != null) {
+                            navigationMapRoute.removeRoute();
+                        } else {
+                            navigationMapRoute = new NavigationMapRoute(null, mapView, mapboxMap, R.style.NavigationMapRoute);
+                        }
+                        navigationMapRoute.addRoute(currentRoute);
+                    }
+
+                    @Override
+                    public void onFailure(Call<DirectionsResponse> call, Throwable throwable) {
+                        Log.e(TAG, "Error: " + throwable.getMessage());
+                    }
+                });
     }
 }
