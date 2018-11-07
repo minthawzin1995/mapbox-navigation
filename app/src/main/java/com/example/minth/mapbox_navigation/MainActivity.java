@@ -31,7 +31,7 @@ public class MainActivity extends AppCompatActivity implements
     private MapboxMap mapboxMap;
     private MapView mapView;
     private LocationEngine locationEngine;
-    // variables for adding location laye
+    // variables for adding location layer
     private LocationLayerPlugin locationLayerPlugin;
     private Location originLocation;
 
@@ -39,11 +39,11 @@ public class MainActivity extends AppCompatActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-// Mapbox access token is configured here. This needs to be called either in your application
-// object or in the same activity which contains the mapview.
+    // Mapbox access token is configured here. This needs to be called either in your application
+    // object or in the same activity which contains the mapview.
         Mapbox.getInstance(this, getString(R.string.access_token));
 
-// This contains the MapView in XML and needs to be called after the access token is configured.
+    // This contains the MapView in XML and needs to be called after the access token is configured.
         setContentView(R.layout.activity_main);
 
         mapView = findViewById(R.id.mapView);
